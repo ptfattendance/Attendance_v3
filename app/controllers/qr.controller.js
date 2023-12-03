@@ -3,11 +3,15 @@ const Qr = db.qr;
 const Attendance = db.attendance;
 const User = db.user;
 
+var resp = 0;
+
 // API to generate qr
 exports.generate = async (req, res) => {
     try {
         console.log('called generate qr');
 
+        resp = 0;
+        
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const stringLength = Math.floor(Math.random() * 21) + 10;
         let generatedString = '';
@@ -17,7 +21,7 @@ exports.generate = async (req, res) => {
             generatedString += characters[randomIndex];
         }
 
-        const qrString = `attendance-${generatedString}`;
+        const qrString = `attendance-${generatedString}ptf`;
 
         const existingQR = await Qr.findOne();
         if (existingQR) {
@@ -67,6 +71,8 @@ exports.verify = async (req, res) => {
                     // Update the lastScan field based on the current scan
                     attendanceEntry.lastScan = lastScan;
 
+                    // resp = 100;
+                    
                     if (lastScan === 'out') {
                         attendanceEntry.out = {
                             date: currentDate,
@@ -108,6 +114,8 @@ exports.verify = async (req, res) => {
                     return res.status(400).json({ message: 'Invalid operation. First entry must be "in".' });
                 }
 
+                // resp = 100;
+                
                 const attendanceEntry = new Attendance({
                     email,
                     in: {
@@ -149,6 +157,8 @@ if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
                 await attendanceEntry.save();
             }
 
+            resp = 100;
+
             await Qr.deleteOne({ _id: qrString._id }); // Remove the QR code from the database
             res.status(200).json({ message: 'QR verification successful' });
         } else {
@@ -162,6 +172,8 @@ if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
 
 
 
-
+exports.resp = async (req, res) => {
+    return res.status(200).json({ response: resp });
+};
 
 // await Qr.deleteOne({ _id: qrString._id });
