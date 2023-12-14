@@ -18,6 +18,8 @@ exports.requestLeave = async (req, res) => {
         }
 
         name = user.name;
+        // Generate unique userId
+        const leaveId = await generateLeaveId();
 
         // Check if the leave request already exists for the specified date
         const existingLeaveRequest = await Leave.findOne({ email, requestDate });
@@ -28,6 +30,7 @@ exports.requestLeave = async (req, res) => {
 
         // Create a new leave request
         const newLeaveRequest = new Leave({
+            leaveId,
             email,
             requestDate,
             reason,
@@ -171,93 +174,169 @@ exports.requestLeave = async (req, res) => {
 
 // API to list all leave requests with user details
 exports.listLeaveRequests = async (req, res) => {
-    try {
+  try {
+      // Find all leave requests
+      const leaveRequests = await Leave.find();
 
-        // Find all leave requests
-        const leaveRequests = await Leave.find();
+      if (leaveRequests.length === 0) {
+          return res.status(404).json({ message: 'No leave requests found' });
+      }
 
-        if (leaveRequests.length === 0) {
-            return res.status(404).json({ message: 'No leave requests found' });
-        }
+      // Convert the date strings to Date objects for proper sorting
+      const sortedLeaveRequests = leaveRequests.sort((a, b) => {
+          const dateA = new Date(a.requestDate);
+          const dateB = new Date(b.requestDate);
 
-        // Create an array to store the formatted results
-        const formattedLeaveRequests = [];
+          return dateB - dateA;
+      });
 
-        // Iterate through each leave request and fetch user details
-        for (const leaveRequest of leaveRequests) {
-            const user = await User.findOne({ email: leaveRequest.email });
+      // Create an array to store the formatted results
+      const formattedLeaveRequests = [];
 
-            const formattedRequest = {
-                email: leaveRequest.email,
-                requestDate: leaveRequest.requestDate,
-                reason: leaveRequest.reason,
-                requestStatus: leaveRequest.requestStatus,
-                requestedOn: leaveRequest.requestedOn,
-                approvedOrRejectedOn: leaveRequest.approvedOrRejectedOn,
-                name: user ? user.name : '',
-                phone: user ? user.phoneNumber : '',
-                designation: user ? user.designation : '',
-                batch: user ? user.batch : '',
-                address: user ? user.address : '',
-            };
+      // Iterate through each leave request and fetch user details
+      for (const leaveRequest of sortedLeaveRequests) {
+          const user = await User.findOne({ email: leaveRequest.email });
 
-            formattedLeaveRequests.push(formattedRequest);
-        }
+          const formattedRequest = {
+              leaveId: leaveRequest.leaveId,
+              email: leaveRequest.email,
+              requestDate: leaveRequest.requestDate,
+              reason: leaveRequest.reason,
+              requestStatus: leaveRequest.requestStatus,
+              requestedOn: leaveRequest.requestedOn,
+              approvedOrRejectedOn: leaveRequest.approvedOrRejectedOn,
+              name: user ? user.name : '',
+              phone: user ? user.phoneNumber : '',
+              designation: user ? user.designation : '',
+              batch: user ? user.batch : '',
+              address: user ? user.address : '',
+          };
 
-        res.status(200).json({ leaveRequests: formattedLeaveRequests });
-    } catch (error) {
-        console.error('Error listing leave requests:', error);
-        res.status(500).json({ message: 'Failed to list leave requests' });
-    }
+          formattedLeaveRequests.push(formattedRequest);
+      }
+
+      res.status(200).json({ leaveRequests: formattedLeaveRequests });
+  } catch (error) {
+      console.error('Error listing leave requests:', error);
+      res.status(500).json({ message: 'Failed to list leave requests' });
+  }
 };
 
-// API to list leave requests by status
+
+// API to list leave requests by status with user details
 exports.listLeaveRequestsByStatus = async (req, res) => {
-    try {
-        const { requestStatus } = req.params;
+  try {
+      const { requestStatus } = req.params;
 
-        // Validate requestStatus to ensure it's one of the allowed values
-        const allowedStatusValues = ['requested', 'approved', 'rejected'];
-        if (!allowedStatusValues.includes(requestStatus)) {
-            return res.status(400).json({ message: 'Invalid requestStatus' });
-        }
+      // Validate requestStatus to ensure it's one of the allowed values
+      const allowedStatusValues = ['requested', 'approved', 'rejected'];
+      if (!allowedStatusValues.includes(requestStatus)) {
+          return res.status(400).json({ message: 'Invalid requestStatus' });
+      }
 
-        // Find leave requests with the specified status
-        const leaveRequests = await Leave.find({ requestStatus });
+      // Find leave requests with the specified status
+      const leaveRequests = await Leave.find({ requestStatus });
 
-        if (leaveRequests.length === 0) {
-            return res.status(404).json({ message: `No leave requests found with status ${requestStatus}` });
-        }
+      if (leaveRequests.length === 0) {
+          return res.status(404).json({ message: `No leave requests found with status ${requestStatus}` });
+      }
 
-        // Create an array to store the formatted results
-        const formattedLeaveRequests = [];
+      // Convert the date strings to Date objects for proper sorting
+      const sortedLeaveRequests = leaveRequests.sort((a, b) => {
+          const dateA = new Date(a.requestDate);
+          const dateB = new Date(b.requestDate);
 
-        // Iterate through each leave request and fetch user details
-        for (const leaveRequest of leaveRequests) {
-            const user = await User.findOne({ email: leaveRequest.email });
+          return dateB - dateA;
+      });
 
-            const formattedRequest = {
-                email: leaveRequest.email,
-                requestDate: leaveRequest.requestDate,
-                reason: leaveRequest.reason,
-                requestStatus: leaveRequest.requestStatus,
-                requestedOn: leaveRequest.requestedOn,
-                approvedOrRejectedOn: leaveRequest.approvedOrRejectedOn,
-                name: user ? user.name : '',
-                phone: user ? user.phoneNumber : '',
-                designation: user ? user.designation : '',
-                batch: user ? user.batch : '',
-                address: user ? user.address : '',
-            };
+      // Create an array to store the formatted results
+      const formattedLeaveRequests = [];
 
-            formattedLeaveRequests.push(formattedRequest);
-        }
+      // Iterate through each leave request and fetch user details
+      for (const leaveRequest of sortedLeaveRequests) {
+          const user = await User.findOne({ email: leaveRequest.email });
 
-        res.status(200).json({ leaveRequests: formattedLeaveRequests });
-    } catch (error) {
-        console.error('Error listing leave requests by status:', error);
-        res.status(500).json({ message: 'Failed to list leave requests by status' });
-    }
+          const formattedRequest = {
+              leaveId: leaveRequest.leaveId,
+              email: leaveRequest.email,
+              requestDate: leaveRequest.requestDate,
+              reason: leaveRequest.reason,
+              requestStatus: leaveRequest.requestStatus,
+              requestedOn: leaveRequest.requestedOn,
+              approvedOrRejectedOn: leaveRequest.approvedOrRejectedOn,
+              name: user ? user.name : '',
+              phone: user ? user.phoneNumber : '',
+              designation: user ? user.designation : '',
+              batch: user ? user.batch : '',
+              address: user ? user.address : '',
+          };
+
+          formattedLeaveRequests.push(formattedRequest);
+      }
+
+      res.status(200).json({ leaveRequests: formattedLeaveRequests });
+  } catch (error) {
+      console.error('Error listing leave requests by status:', error);
+      res.status(500).json({ message: 'Failed to list leave requests by status' });
+  }
+};
+
+
+// API to list leave requests of a single user
+exports.listUserLeaveRequests = async (req, res) => {
+  try {
+      const { email, status } = req.body;
+
+      let leaveRequests;
+
+      if (status && status !== 'all') {
+          const allowedStatusValues = ['approved', 'rejected', 'requested'];
+          if (!allowedStatusValues.includes(status)) {
+              return res.status(400).json({ message: 'Invalid status' });
+          }
+          leaveRequests = await Leave.find({ email, requestStatus: status });
+      } else {
+          leaveRequests = await Leave.find({ email });
+      }
+
+      if (leaveRequests.length === 0) {
+          return res.status(404).json({ message: 'No leave requests found' });
+      }
+
+      // Convert the date strings to Date objects for proper sorting
+      const sortedLeaveRequests = leaveRequests.sort((a, b) => {
+          const dateA = new Date(a.requestDate);
+          const dateB = new Date(b.requestDate);
+
+          return dateB - dateA;
+      });
+
+      // Create an array to store the formatted results
+      const formattedLeaveRequests = [];
+
+      // Iterate through each leave request and fetch user details
+      for (const leaveRequest of sortedLeaveRequests) {
+          const user = await User.findOne({ email: leaveRequest.email });
+
+          const formattedRequest = {
+              leaveId: leaveRequest.leaveId,
+              email: leaveRequest.email,
+              requestDate: leaveRequest.requestDate,
+              reason: leaveRequest.reason,
+              requestStatus: leaveRequest.requestStatus,
+              requestedOn: leaveRequest.requestedOn,
+              approvedOrRejectedOn: leaveRequest.approvedOrRejectedOn,
+              name: user ? user.name : '',
+          };
+
+          formattedLeaveRequests.push(formattedRequest);
+      }
+
+      res.status(200).json({ leaveRequests: formattedLeaveRequests });
+  } catch (error) {
+      console.error('Error listing leave requests:', error);
+      res.status(500).json({ message: 'Failed to list leave requests' });
+  }
 };
 
 
@@ -265,7 +344,7 @@ exports.listLeaveRequestsByStatus = async (req, res) => {
 // API to approve or decline leave request
 exports.changeLeaveStatus = async (req, res) => {
     try {
-        const { email, status } = req.body;
+        const { email,leaveId, status } = req.body;
 
         var name = '';
 
@@ -285,7 +364,7 @@ exports.changeLeaveStatus = async (req, res) => {
         }
 
         // Find the leave request by ID
-        const leaveRequest = await Leave.findOne({ email });
+        const leaveRequest = await Leave.findOne({ email,leaveId });
 
         if (!leaveRequest) {
             return res.status(404).json({ message: 'Leave request not found' });
@@ -541,3 +620,16 @@ body {
         res.status(500).json({ message: 'Failed to change leave request status' });
     }
 };
+
+
+// Function to generate unique leave ID
+async function generateLeaveId() {
+  const lastLeave = await Leave.findOne({}, {}, { sort: { leaveId: -1 } });
+
+  if (lastLeave) {
+      const lastId = parseInt(lastLeave.leaveId);
+      return (lastId + 1).toString().padStart(4, "0");
+  }
+
+  return "0001";
+}

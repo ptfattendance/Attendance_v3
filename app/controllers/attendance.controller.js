@@ -1,19 +1,19 @@
 const db = require("../models");
 const Attendance = db.attendance;
 const User = db.user;
+const Image = db.image;
 
-// API to list marked attendances for a single user
+// API to list attendances for a user in descending order
 exports.listAttendances = async (req, res) => {
     try {
         const { email } = req.params; // Assuming the email is passed as a parameter
 
-         // Check if the user exists in the user schema
-         const user = await User.findOne({ email });
+        // Check if the user exists in the user schema
+        const user = await User.findOne({ email });
 
-         if (!user) {
-             return res.status(400).json({ message: 'Invalid user' });
-         }
-
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid user' });
+        }
 
         // Find all attendance entries for the specified user email
         const attendances = await Attendance.find({ email });
@@ -22,14 +22,23 @@ exports.listAttendances = async (req, res) => {
             return res.status(404).json({ message: 'No attendance entries found for the user' });
         }
 
-        res.status(200).json({ attendances });
+        // Convert the date strings to Date objects for proper sorting
+        const sortedAttendances = attendances.sort((a, b) => {
+            const dateA = new Date(a.in.date);
+            const dateB = new Date(b.in.date);
+
+            return dateB - dateA;
+        });
+
+        res.status(200).json({ attendances: sortedAttendances });
     } catch (error) {
         console.error('Error listing attendances:', error);
         res.status(500).json({ message: 'Failed to list attendances' });
     }
 };
 
-// API to list marked attendances of all users on a single day
+
+
 // exports.listAttendancesByDate = async (req, res) => {
 //     try {
 //         const { date } = req.body; // Assuming the date is passed as a parameter
@@ -49,6 +58,7 @@ exports.listAttendances = async (req, res) => {
 // };
 
 // If batch is not provided all attendance of the date will be shown
+// API to list attendances by date and, if provided, batch
 exports.listAttendancesByDate = async (req, res) => {
     try {
         const { date, batch } = req.body;
@@ -57,7 +67,7 @@ exports.listAttendancesByDate = async (req, res) => {
         let userEmailsInBatch = [];
         if (batch) {
             const usersInBatch = await User.find({ batch }, { email: 1 });
-            
+
             // Check if there are any users in the specified batch
             if (usersInBatch.length === 0) {
                 return res.status(400).json({ message: 'Invalid batch' });
@@ -78,7 +88,21 @@ exports.listAttendancesByDate = async (req, res) => {
             return res.status(404).json({ message: 'No attendance entries found for the date and batch' });
         }
 
-        res.status(200).json({ attendances });
+        // Retrieve user names and images based on email
+        const populatedAttendances = await Promise.all(
+            attendances.map(async (attendance) => {
+                const user = await User.findOne({ email: attendance.email }, { name: 1 });
+                const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+
+                return {
+                    attendance: attendance,
+                    name: user ? user.name : '',
+                    image: image ? image.data  : '',
+                };
+            })
+        );
+
+        res.status(200).json({ attendances: populatedAttendances });
     } catch (error) {
         console.error('Error listing attendances by date:', error);
         res.status(500).json({ message: 'Failed to list attendances by date' });
@@ -108,11 +132,19 @@ exports.listAttendancesByMonth = async (req, res) => {
             return res.status(404).json({ message: 'No attendance entries found for the month' });
         }
 
+        // Convert the date strings to Date objects for proper sorting
+        const sortedAttendances = attendances.sort((a, b) => {
+            const dateA = new Date(a.in.date);
+            const dateB = new Date(b.in.date);
+
+            return dateB - dateA;
+        });
+
         // Create an array to store the formatted results
         const formattedAttendances = [];
 
         // Iterate through each attendance entry and fetch user details
-        for (const attendance of attendances) {
+        for (const attendance of sortedAttendances) {
             const user = await User.findOne({ email: attendance.email });
 
             const formattedAttendance = {
@@ -137,7 +169,7 @@ exports.listAttendancesByMonth = async (req, res) => {
 };
 
 
-
+// API to list attendance by month, year, and batch
 exports.listAttendancesByMonthAndBatch = async (req, res) => {
     try {
         const { month, year, batch } = req.body;
@@ -168,11 +200,19 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
             return res.status(404).json({ message: 'No attendance entries found for the month and batch' });
         }
 
+        // Convert the date strings to Date objects for proper sorting
+        const sortedAttendances = attendances.sort((a, b) => {
+            const dateA = new Date(a.in.date);
+            const dateB = new Date(b.in.date);
+
+            return dateB - dateA;
+        });
+
         // Create an array to store the formatted results
         const formattedAttendances = [];
 
         // Iterate through each attendance entry and fetch user details
-        for (const attendance of attendances) {
+        for (const attendance of sortedAttendances) {
             const user = await User.findOne({ email: attendance.email });
 
             const formattedAttendance = {
@@ -194,5 +234,36 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
     } catch (error) {
         console.error('Error listing attendances by month and batch:', error);
         res.status(500).json({ message: 'Failed to list attendances by month and batch' });
+    }
+};
+
+
+
+// API to get the latest attendance status for a user on today
+exports.getLatestAttendanceStatus = async (req, res) => {
+    try {
+        const { email } = req.params; // Assuming the email is passed as a parameter
+
+        // Get the current date in the format "12/2/2023"
+        const currentDate = new Date().toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+        });
+
+        // Find the latest attendance entry for the specified user and today's date
+        const latestAttendanceEntry = await Attendance.findOne({
+            email,
+            'in.date': currentDate,
+        }).sort({ 'in.time': -1 }); // Sort in descending order to get the latest entry
+
+        if (!latestAttendanceEntry) {
+            return res.status(200).json({ status: 'not scanned' });
+        }
+
+        res.status(200).json({ status: latestAttendanceEntry.lastScan });
+    } catch (error) {
+        console.error('Error getting latest attendance status:', error);
+        res.status(500).json({ message: 'Failed to get latest attendance status' });
     }
 };

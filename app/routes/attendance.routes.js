@@ -15,4 +15,7 @@ router.post('/getByMonth', controller.listAttendancesByMonth); //2023 //12
 //API to list attendnce by ppassing month and year
 router.post('/getByMonthAndBatch', controller.listAttendancesByMonthAndBatch); //2023 //12 // batch
 
+//API to get attenfance status of s user
+router.get('/getStatus/:email',controller.getLatestAttendanceStatus);
+
 module.exports = router

@@ -17,6 +17,9 @@ router.route("/image-get").post(controller.getImageByEmail);
 // API to upload image
 router.route("/image-add").post(upload.single('image'), controller.uploadImage);
 
+// API to delete image
+router.route("/image-delete/:email").get(controller.deleteImage);
+
 // API to update user details
 router.route("/update").post(controller.updateUser);
 

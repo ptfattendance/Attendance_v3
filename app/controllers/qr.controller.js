@@ -11,7 +11,7 @@ exports.generate = async (req, res) => {
         console.log('called generate qr');
 
         resp = 0;
-        
+
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const stringLength = Math.floor(Math.random() * 21) + 10;
         let generatedString = '';
@@ -44,9 +44,7 @@ exports.generate = async (req, res) => {
 exports.verify = async (req, res) => {
     try {
         console.log('called verify qr');
-
         const { qrCode, email, lastScan } = req.body;
-
         const qrString = await Qr.findOne({ qrString: qrCode });
 
         if (qrString) {
@@ -63,16 +61,18 @@ exports.verify = async (req, res) => {
 
             if (attendanceEntry) {
                 // If an attendance entry already exists, check the lastScan value
-                if (lastScan === 'out' && attendanceEntry.lastScan === 'out') {
-                    return res.status(400).json({ message: 'You are already out' });
-                } else if (lastScan === 'in' && attendanceEntry.lastScan === 'in') {
+                console.log('aaaaaaaaaaaa');
+                // if (lastScan === 'out' && attendanceEntry.lastScan === 'out') {
+                //     return res.status(400).json({ message: 'You are already out' });
+                // } else 
+                if (lastScan === 'in' && attendanceEntry.lastScan === 'in') {
                     return res.status(400).json({ message: 'You are already in' });
+                }else if(attendanceEntry.lastScan === 'out'){
+                    return res.status(400).json({ message: 'Attendance already marked for the day' });
                 } else {
                     // Update the lastScan field based on the current scan
                     attendanceEntry.lastScan = lastScan;
 
-                    // resp = 100;
-                    
                     if (lastScan === 'out') {
                         attendanceEntry.out = {
                             date: currentDate,
@@ -80,42 +80,35 @@ exports.verify = async (req, res) => {
                         };
                     }
 
-                    // Check if the current time falls within the specified time ranges
-                    // const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-
-
                     const currentTime = new Date();
                     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-                    
+                    console.log('Current Minutes:', currentMinutes);
+
                     // Define the time ranges in minutes since midnight
                     const morningStart = 8 * 60 + 40;
                     const morningEnd = 13 * 60;
                     const afternoonStart = 13 * 60;
-                    const afternoonEnd = 13 * 60 + 40;
-                    
-                    if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
-                        (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)) {
+                    const afternoonEnd = 23 * 60;
+
+                    if (
+                        (currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
+                        (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)
+                    ) {
                         attendanceEntry.in.late = true;
+                        console.log('Marked as late');
                     }
 
-                    // if (
-                    //     (currentTime >= '08:40 AM' && currentTime <= '01:00 PM') ||
-                    //     (currentTime >= '01:00 PM' && currentTime <= '01:40 PM')
-                    // ) {
-                    //     attendanceEntry.in.late = true;
-                    // }
+                    await attendanceEntry.save();
 
-                    await attendanceEntry.save(); // Save the updated attendance entry
+
                 }
             } else {
                 // If it's the first entry for the day, mark the 'in' time and set lastScan as 'in'
                 if (lastScan === 'out') {
-                    return res.status(400).json({ message: 'Invalid operation. First entry must be "in".' });
+                    return res.status(400).json({ message: 'Invalid operation. First entry must be IN.' });
                 }
+                console.log('bbbbbbbbbbbbb');
 
-                // resp = 100;
-                
                 const attendanceEntry = new Attendance({
                     email,
                     in: {
@@ -130,29 +123,19 @@ exports.verify = async (req, res) => {
                     lastScan: 'in',
                 });
 
-                // Check if the current time falls within the specified time ranges
-                // const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-                // if (
-                //     (currentTime >= '08:40 AM' && currentTime <= '01:00 PM') ||
-                //     (currentTime >= '01:00 PM' && currentTime <= '01:40 PM')
-                // ) {
-                //     attendanceEntry.in.late = true;
-                // }
-
                 const currentTime = new Date();
-const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
-// Define the time ranges in minutes since midnight
-const morningStart = 8 * 60 + 40;
-const morningEnd = 13 * 60;
-const afternoonStart = 13 * 60;
-const afternoonEnd = 13 * 60 + 40;
+                // Define the time ranges in minutes since midnight
+                const morningStart = 8 * 60 + 40;
+                const morningEnd = 13 * 60;
+                const afternoonStart = 13 * 60;
+                const afternoonEnd = 23 * 60;
 
-if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
-    (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)) {
-    attendanceEntry.in.late = true;
-}
+                if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
+                    (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)) {
+                    attendanceEntry.in.late = true;
+                }
 
                 await attendanceEntry.save();
             }

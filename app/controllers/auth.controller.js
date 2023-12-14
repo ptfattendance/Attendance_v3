@@ -1,5 +1,6 @@
 const db = require("../models");
 const User = db.user;
+const Image = db.image;
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
 
@@ -149,14 +150,11 @@ exports.register = async (req, res) => {
         }
     });
 
-
         res.status(201).json({ message: 'User registered successfully', userId });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
-
 
 
 // API for user login
@@ -190,7 +188,7 @@ exports.login = async (req, res) => {
         // Generate and sign a JWT token
         // const token = jwt.sign({ userId: user.userId, role: user.role }, 'secret-key');
 
-        res.status(200).json({ message: 'Login successful',role: user.role});
+        res.status(200).json({ message: 'Login successful',role: user.role, name: user.name, batch: user.batch});
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -368,19 +366,38 @@ exports.deleteUser = async (req, res) => {
 
 // API to get all users
 exports.getAllUsers = async (req, res) => {
-    try {
-        console.log('called get all users');
+  try {
+      console.log('called get all users');
 
-        const users = await User.find({}, { password: 0 });
+      // Find all users excluding the password
+      const users = await User.find({}, { password: 0 });
 
-        if (!users || users.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
-        }
+      if (!users || users.length === 0) {
+          return res.status(404).json({ message: 'No users found' });
+      }
 
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+      // Create an array to store the users with images
+      const usersWithImages = [];
+
+      // Iterate through each user and fetch the associated image
+      for (const user of users) {
+          // Find the image for the user
+          const image = await Image.findOne({ email: user.email });
+
+          // Create a user object with the image data
+          const userWithImage = {
+              ...user.toObject(),
+              image: image ? image.data : '', // Add the image data to the user object
+          };
+
+          usersWithImages.push(userWithImage);
+      }
+
+      res.status(200).json(usersWithImages);
+  } catch (error) {
+      console.error('Error getting all users:', error);
+      res.status(500).json({ message: 'Failed to get all users' });
+  }
 };
 
 

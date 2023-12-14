@@ -6,6 +6,8 @@ const Otp = db.otp;
 const bcrypt = require("bcrypt");
 
 
+
+
 //API to get a single user
 exports.getUser = async (req, res) => {
     try {
@@ -29,7 +31,7 @@ exports.uploadImage = async (req, res) => {
     try {
         console.log('called upload image');
 
-        const { name, email } = req.body;
+        const { email } = req.body;
         const data = req.file.buffer.toString('base64'); // Convert the image buffer to base64 encoded string
 
         // Find existing image by email
@@ -37,13 +39,11 @@ exports.uploadImage = async (req, res) => {
 
         if (existingImage) {
             // If an image with the same email exists, replace it with the new image data
-            existingImage.name = name;
             existingImage.data = data;
             await existingImage.save();
         } else {
             // If no existing image found, create a new one
             const newImage = new Image({
-                name,
                 email,
                 data
             });
@@ -74,6 +74,36 @@ exports.getImageByEmail = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// API to delete image by email
+exports.deleteImage = async (req, res) => {
+    try {
+        console.log('called delete image');
+
+        const { email } = req.params;
+
+        // Validate if email is provided
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Find the image by email
+        const image = await Image.findOne({ email });
+
+        if (!image) {
+            return res.status(404).json({ message: 'Image not found for the provided email' });
+        }
+
+        // Delete the image
+        await Image.deleteOne({ email });
+
+        res.status(200).json({ message: 'Image deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        res.status(500).json({ message: 'Failed to delete image' });
+    }
+};
+
 
 // API to update user details
 exports.updateUser = async (req, res) => {

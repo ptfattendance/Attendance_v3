@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const leaveSchema = new mongoose.Schema({
     email: String,
+    leaveId: {
+      type: String,
+      required: true,
+      unique: true,
+  },
     requestDate: String,
     reason: String,
     requestStatus: {
