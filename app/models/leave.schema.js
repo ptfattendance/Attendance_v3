@@ -10,6 +10,11 @@ const leaveSchema = new mongoose.Schema({
     requestDate: String,
     toDate: String,
     reason: String,
+    type:  {
+      type: String,
+      enum: ['casual', 'sick'],
+      required: true,
+    },
     requestStatus: {
         type: String,
         enum: ['requested', 'approved', 'rejected'],

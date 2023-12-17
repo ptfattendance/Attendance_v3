@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 // API to request leave
 exports.requestLeave = async (req, res) => {
     try {
-        const { email, requestDate, toDate ,reason } = req.body;
+        const { email, requestDate, toDate ,reason ,type} = req.body;
 
         var name = '';
 
@@ -32,6 +32,7 @@ exports.requestLeave = async (req, res) => {
         const newLeaveRequest = new Leave({
             leaveId,
             email,
+            type,
             requestDate,
             toDate,
             reason,
@@ -133,8 +134,13 @@ exports.requestLeave = async (req, res) => {
       <strong>Reason for Leave:</strong> ${reason}
     </div>
     <div class="content">
+      <strong>Leave Type:</strong> ${type}
+    </div>
+    <div class="content">
       <strong>Date Requested:</strong> ${requestDate}
-      <strong>Leave Until:</strong> ${toDate}
+    </div>
+    <div class="content">
+    <strong>Leave Until:</strong> ${toDate}
     </div>
 
     <div class="footer">
@@ -203,6 +209,8 @@ exports.listLeaveRequests = async (req, res) => {
               leaveId: leaveRequest.leaveId,
               email: leaveRequest.email,
               requestDate: leaveRequest.requestDate,
+              toDate: leaveRequest.toDate,
+              type: leaveRequest.type,
               reason: leaveRequest.reason,
               requestStatus: leaveRequest.requestStatus,
               requestedOn: leaveRequest.requestedOn,
@@ -245,8 +253,8 @@ exports.listLeaveRequestsByStatus = async (req, res) => {
 
       // Convert the date strings to Date objects for proper sorting
       const sortedLeaveRequests = leaveRequests.sort((a, b) => {
-          const dateA = new Date(a.requestDate);
-          const dateB = new Date(b.requestDate);
+          const dateA = new Date(a.requestedOn);
+          const dateB = new Date(b.requestedOn);
 
           return dateB - dateA;
       });
@@ -262,6 +270,8 @@ exports.listLeaveRequestsByStatus = async (req, res) => {
               leaveId: leaveRequest.leaveId,
               email: leaveRequest.email,
               requestDate: leaveRequest.requestDate,
+              toDate: leaveRequest.toDate,
+              type: leaveRequest.type,
               reason: leaveRequest.reason,
               requestStatus: leaveRequest.requestStatus,
               requestedOn: leaveRequest.requestedOn,
@@ -324,6 +334,8 @@ exports.listUserLeaveRequests = async (req, res) => {
               leaveId: leaveRequest.leaveId,
               email: leaveRequest.email,
               requestDate: leaveRequest.requestDate,
+              toDate: leaveRequest.toDate,
+              type: leaveRequest.type,
               reason: leaveRequest.reason,
               requestStatus: leaveRequest.requestStatus,
               requestedOn: leaveRequest.requestedOn,
@@ -474,7 +486,13 @@ exports.changeLeaveStatus = async (req, res) => {
       <strong>Reason for Leave:</strong> ${leaveRequest.reason}
     </div>
     <div class="content">
+      <strong>Leave Type:</strong> ${leaveRequest.type}
+    </div>
+    <div class="content">
       <strong>Date Requested:</strong> ${leaveRequest.requestDate}
+    </div>
+    <div class="content">
+      <strong>Leave Until:</strong> ${leaveRequest.toDate}
     </div>
     <div class="content">
       <strong>Approved On:</strong> ${leaveRequest.approvedOrRejectedOn}
@@ -586,7 +604,13 @@ body {
       <strong>Reason for Leave:</strong> ${leaveRequest.reason}
     </div>
     <div class="content">
+      <strong>Leave Type:</strong> ${leaveRequest.type}
+    </div>
+    <div class="content">
       <strong>Date Requested:</strong> ${leaveRequest.requestDate}
+    </div>
+    <div class="content">
+      <strong>Leave Until:</strong> ${leaveRequest.toDate}
     </div>
 
     <div class="footer">
