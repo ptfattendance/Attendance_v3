@@ -8,6 +8,7 @@ const leaveSchema = new mongoose.Schema({
       unique: true,
   },
     requestDate: String,
+    toDate: String,
     reason: String,
     requestStatus: {
         type: String,

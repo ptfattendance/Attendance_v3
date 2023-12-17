@@ -50,7 +50,7 @@ exports.uploadImage = async (req, res) => {
             await newImage.save();
         }
 
-        res.status(201).json({ message: 'Image uploaded successfully' });
+        res.status(200).json({ message: 'Image uploaded successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

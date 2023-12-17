@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 // API to request leave
 exports.requestLeave = async (req, res) => {
     try {
-        const { email, requestDate, reason } = req.body;
+        const { email, requestDate, toDate ,reason } = req.body;
 
         var name = '';
 
@@ -33,6 +33,7 @@ exports.requestLeave = async (req, res) => {
             leaveId,
             email,
             requestDate,
+            toDate,
             reason,
             requestStatus: 'requested',
             requestedOn: new Date().toLocaleString('en-US', { 
@@ -133,6 +134,7 @@ exports.requestLeave = async (req, res) => {
     </div>
     <div class="content">
       <strong>Date Requested:</strong> ${requestDate}
+      <strong>Leave Until:</strong> ${toDate}
     </div>
 
     <div class="footer">
