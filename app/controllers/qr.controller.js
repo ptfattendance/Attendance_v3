@@ -83,7 +83,7 @@ exports.verify = async (req, res) => {
                     // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
                     const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
-                const currentHours = parseInt(currentTimeParts[0], 10);
+                const currentHours = parseInt(currentTimeString.split(":")[0], 10);
                 const currentMinute = parseInt(currentTimeString.split(":")[1], 10);
                 const currentMinutes = currentHours * 60 + currentMinute;
 
@@ -129,7 +129,7 @@ exports.verify = async (req, res) => {
 
 
                 const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
-                const currentHours = parseInt(currentTimeParts[0], 10);
+                const currentHours = parseInt(currentTimeString.split(":")[0], 10);
                 const currentMinute = parseInt(currentTimeString.split(":")[1], 10);
                 const currentMinutes = currentHours * 60 + currentMinute;
 
