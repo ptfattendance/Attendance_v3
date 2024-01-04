@@ -142,6 +142,7 @@ exports.verify = async (req, res) => {
                 const morningEnd = 13 * 60;
                 const afternoonStart = 13 * 60;
                 const afternoonEnd = 23 * 60;
+                console.log('Current Minutes:', currentMinutes);
 
                 if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
                     (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)) {
