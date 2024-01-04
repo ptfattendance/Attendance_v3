@@ -82,16 +82,21 @@ exports.verify = async (req, res) => {
 
                     // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
-                const currentHours = parseInt(currentTimeString.split(":")[0], 10);
-                const currentMinute = parseInt(currentTimeString.split(":")[1], 10);
-                const currentMinutes = currentHours * 60 + currentMinute;
-
-                const morningStart = 8 * 60 + 40;
-                const morningEnd = 13 * 60;
-                const afternoonStart = 13 * 60;
-                const afternoonEnd = 23 * 60;
-                
+                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: false, });
+                    const currentHours = parseInt(currentTimeString.split(":")[0], 10);
+                    const currentMinute = parseInt(currentTimeString.split(":")[1], 10);
+                    const currentMinutes = currentHours * 60 + currentMinute;
+    
+                    console.log('Current Hours:', currentHours);
+                    console.log('Current Minute:', currentMinute);
+                    console.log('currentTimeString:', currentTimeString);
+    
+    
+                    const morningStart = 8 * 60 + 40;
+                    const morningEnd = 13 * 60;
+                    const afternoonStart = 13 * 60;
+                    const afternoonEnd = 23 * 60;
+                    
                 console.log('Current Minutes:', currentMinutes);
 
                     if (
