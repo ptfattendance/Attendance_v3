@@ -84,7 +84,8 @@ exports.verify = async (req, res) => {
                     // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
                     const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     const currentTime = new Date(currentTimeString);
-                    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                    // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                    const currentMinutes = parseInt(currentTimeString.split(":")[1], 10);
 
 
                     console.log('Current Minutes:', currentMinutes);
@@ -130,20 +131,15 @@ exports.verify = async (req, res) => {
 
 
                 const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
-                const currentTime = new Date(currentTimeString);
-                const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-
-
-                // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
-                // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-
-                // Define the time ranges in minutes since midnight
+                const currentMinutes = parseInt(currentTimeString.split(":")[1], 10);
+                
                 const morningStart = 8 * 60 + 40;
                 const morningEnd = 13 * 60;
                 const afternoonStart = 13 * 60;
                 const afternoonEnd = 23 * 60;
+                
                 console.log('Current Minutes:', currentMinutes);
-
+                
                 if ((currentMinutes >= morningStart && currentMinutes <= morningEnd) ||
                     (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)) {
                     attendanceEntry.in.late = true;
