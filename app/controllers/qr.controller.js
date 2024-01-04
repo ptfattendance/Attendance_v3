@@ -56,7 +56,7 @@ exports.verify = async (req, res) => {
             }
 
             // Check if an attendance entry already exists for the current date and email
-            const currentDate = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+            const currentDate = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
             const attendanceEntry = await Attendance.findOne({ email, 'in.date': currentDate });
 
             if (attendanceEntry) {
@@ -82,7 +82,7 @@ exports.verify = async (req, res) => {
 
                     // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
                     const currentTime = new Date(currentTimeString);
                     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
@@ -129,7 +129,7 @@ exports.verify = async (req, res) => {
                 });
 
 
-                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
                 const currentTime = new Date(currentTimeString);
                 const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
