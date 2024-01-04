@@ -56,7 +56,7 @@ exports.verify = async (req, res) => {
             }
 
             // Check if an attendance entry already exists for the current date and email
-            const currentDate = new Date().toLocaleDateString('en-US',{ timeZone: 'Asia/Kolkata' });
+            const currentDate = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
             const attendanceEntry = await Attendance.findOne({ email, 'in.date': currentDate });
 
             if (attendanceEntry) {
@@ -67,7 +67,7 @@ exports.verify = async (req, res) => {
                 // } else 
                 if (lastScan === 'in' && attendanceEntry.lastScan === 'in') {
                     return res.status(202).json({ message: 'You are already in' });
-                }else if(attendanceEntry.lastScan === 'out'){
+                } else if (attendanceEntry.lastScan === 'out') {
                     return res.status(202).json({ message: 'Attendance already marked for the day' });
                 } else {
                     // Update the lastScan field based on the current scan
@@ -80,8 +80,13 @@ exports.verify = async (req, res) => {
                         };
                     }
 
-                    const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                    // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                    // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                    const currentTime = new Date(currentTimeString);
                     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+
                     console.log('Current Minutes:', currentMinutes);
 
                     // Define the time ranges in minutes since midnight
@@ -113,7 +118,7 @@ exports.verify = async (req, res) => {
                     email,
                     in: {
                         date: currentDate,
-                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' ,timeZone: 'Asia/Kolkata'}),
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', }),
                         late: false, // Set the 'late' field based on your logic
                     },
                     out: {
@@ -123,8 +128,14 @@ exports.verify = async (req, res) => {
                     lastScan: 'in',
                 });
 
-                const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+
+                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                const currentTime = new Date(currentTimeString);
                 const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+
+                // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
                 // Define the time ranges in minutes since midnight
                 const morningStart = 8 * 60 + 40;
