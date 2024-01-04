@@ -128,10 +128,15 @@ exports.verify = async (req, res) => {
                 });
 
 
-                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: false, });
                 const currentHours = parseInt(currentTimeString.split(":")[0], 10);
                 const currentMinute = parseInt(currentTimeString.split(":")[1], 10);
                 const currentMinutes = currentHours * 60 + currentMinute;
+
+                console.log('Current Hours:', currentHours);
+                console.log('Current Minute:', currentMinute);
+                console.log('currentTimeString:', currentTimeString);
+
 
                 const morningStart = 8 * 60 + 40;
                 const morningEnd = 13 * 60;
