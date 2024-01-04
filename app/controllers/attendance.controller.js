@@ -244,7 +244,7 @@ exports.getLatestAttendanceStatus = async (req, res) => {
     try {
         const { email } = req.params; // Assuming the email is passed as a parameter
 
-        const currentDate = new Date().toLocaleDateString('en-US',{ timeZone: 'America/Los_Angeles' });
+        const currentDate = new Date().toLocaleDateString('en-US',{ timeZone: 'Asia/Kolkata' });
         // Get the current date in the format "12/23/2023"
         // const currentDate = new Date().toLocaleDateString('en-US', {
         //     month: '2-digit',

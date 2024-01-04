@@ -56,7 +56,7 @@ exports.verify = async (req, res) => {
             }
 
             // Check if an attendance entry already exists for the current date and email
-            const currentDate = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
+            const currentDate = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
             const attendanceEntry = await Attendance.findOne({ email, 'in.date': currentDate });
 
             if (attendanceEntry) {
@@ -76,13 +76,13 @@ exports.verify = async (req, res) => {
                     if (lastScan === 'out') {
                         attendanceEntry.out = {
                             date: currentDate,
-                            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
                         };
                     }
 
                     // const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     // const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
+                    const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                     const currentTime = new Date(currentTimeString);
                     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
@@ -118,7 +118,7 @@ exports.verify = async (req, res) => {
                     email,
                     in: {
                         date: currentDate,
-                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', }),
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
                         late: false, // Set the 'late' field based on your logic
                     },
                     out: {
@@ -129,7 +129,7 @@ exports.verify = async (req, res) => {
                 });
 
 
-                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
+                const currentTimeString = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
                 const currentTime = new Date(currentTimeString);
                 const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
