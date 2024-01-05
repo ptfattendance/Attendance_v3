@@ -18,6 +18,8 @@ router.route("/delete").post(controller.deleteUsers);
 // API to delete a single user
 router.route("/deleteMe/:email").get(controller.deleteUser);
 
+// Test API Call
+router.route("/test").get(controller.callTestApi);
 
 
 module.exports = router

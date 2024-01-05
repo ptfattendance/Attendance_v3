@@ -3,6 +3,7 @@ const User = db.user;
 const Image = db.image;
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 
 // API for user registration
@@ -400,6 +401,21 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+
+exports.callTestApi = async (req,res) => {
+  try {
+    console.log("calling test api...");
+    // Make the API call
+    const apiResponse = await axios.get('https://ptf-attendance.onrender.com');
+
+    // Handle the API response as needed
+    console.log('API Response:', apiResponse.data);
+    res.status(200).json( apiResponse.data );
+} catch (error) {
+    console.error('Error making API call:', error.message);
+    res.status(500).json({ message: `Error making API call:, ${error.message}` });
+}
+};
 
 
 // Function to generate unique user ID
