@@ -44,7 +44,17 @@ const userSchema = new mongoose.Schema(
             required: true,
         },
     },
-    { timestamps: true }
+    { 
+        timestamps: { currentTime: () => new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) },
+        toJSON: {
+            transform: function (doc, ret) {
+                ret.createdAt = new Date(ret.createdAt).toISOString();
+                ret.updatedAt = new Date(ret.updatedAt).toISOString();
+                return ret;
+            }
+        }
+        
+    }
 );
 
 const User = mongoose.model('User', userSchema);

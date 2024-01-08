@@ -38,6 +38,7 @@ exports.requestLeave = async (req, res) => {
             reason,
             requestStatus: 'requested',
             requestedOn: new Date().toLocaleString('en-US', { 
+              timeZone: 'Asia/Kolkata',
                 month: '2-digit',
                 day: '2-digit',
                 year: 'numeric',
@@ -450,6 +451,7 @@ exports.changeLeaveStatus = async (req, res) => {
         // Update the leave request status and set the time of approval or rejection
         leaveRequest.requestStatus = status;
         leaveRequest.approvedOrRejectedOn = new Date().toLocaleString('en-US', { 
+          timeZone: 'Asia/Kolkata',
             month: '2-digit',
             day: '2-digit',
             year: 'numeric',
