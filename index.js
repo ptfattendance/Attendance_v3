@@ -3,13 +3,13 @@ const cors = require("cors");
 const cron = require('node-cron');
 const axios = require('axios');
 const app = express();
-const authRoute = require("./app/routes/auth.routes");
-const qrRoute = require("./app/routes/qr.routes");
-const userRoute = require("./app/routes/user.routes");
-const attendanceRoute = require("./app/routes/attendance.routes");
-const leaveRoute = require("./app/routes/leave.routes");
+const authRoute = require("./app/Attendance/routes/auth.routes");
+const qrRoute = require("./app/Attendance/routes/qr.routes");
+const userRoute = require("./app/Attendance/routes/user.routes");
+const attendanceRoute = require("./app/Attendance/routes/attendance.routes");
+const leaveRoute = require("./app/Attendance/routes/leave.routes");
 
-const Otp = require('./app/models/otp.schema');
+const Otp = require('./app/Attendance/models/otp.schema');
 
 var corsOptions = {
     origin: "*"
@@ -28,7 +28,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-const db = require("./app/models");
+const db = require("./app/Attendance/models");
 
 
 // routes
