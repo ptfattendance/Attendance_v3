@@ -8,6 +8,8 @@ const qrRoute = require("./app/Attendance/routes/qr.routes");
 const userRoute = require("./app/Attendance/routes/user.routes");
 const attendanceRoute = require("./app/Attendance/routes/attendance.routes");
 const leaveRoute = require("./app/Attendance/routes/leave.routes");
+const notificationRoute = require("./app/Attendance/routes/notification.routes");
+
 
 const Otp = require('./app/Attendance/models/otp.schema');
 
@@ -41,6 +43,8 @@ app.use('/api/qr', qrRoute);
 app.use('/api/user', userRoute);
 app.use('/api/attendance', attendanceRoute);
 app.use('/api/leave', leaveRoute);
+app.use('/api/notification', notificationRoute);
+
 
 
 // Set up the MongoDB connection
