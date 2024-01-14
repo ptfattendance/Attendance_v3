@@ -58,7 +58,7 @@ db.mongoose
     .then(() => {
         console.log("Successfully connected to MongoDB.");
         startOtpCleanupScheduler();
-        startApiCallScheduler(); // Add the function to start API call scheduler
+        // startApiCallScheduler(); // Add the function to start API call scheduler
     })
     .catch(err => {
         console.error("Connection error", err);
@@ -95,17 +95,17 @@ function startOtpCleanupScheduler() {
 
 Spinning up a service takes a few seconds, which causes a noticeable delay for incoming requests until the service is back up and running. For example, a browser page load will hang momentarily. */
 
-function startApiCallScheduler() {
-   // Define the cron job schedule (runs every day at 8:30 AM except Saturday and Sunday)
-   cron.schedule('30 8 * * 1-5', async () => { // 1-5 represents Monday to Friday
-    try {
-            // Make the API call
-            const apiResponse = await axios.get('https://ptf-attendance.onrender.com');
+// function startApiCallScheduler() {
+//    // Define the cron job schedule (runs every day at 8:30 AM except Saturday and Sunday)
+//    cron.schedule('30 8 * * 1-5', async () => { // 1-5 represents Monday to Friday
+//     try {
+//             // Make the API call
+//             const apiResponse = await axios.get('https://ptf-attendance.onrender.com');
 
-            // Handle the API response as needed
-            console.log('API Response:', apiResponse.data);
-        } catch (error) {
-            console.error('Error making API call:', error.message);
-        }
-    });
-}
+//             // Handle the API response as needed
+//             console.log('API Response:', apiResponse.data);
+//         } catch (error) {
+//             console.error('Error making API call:', error.message);
+//         }
+//     });
+// }

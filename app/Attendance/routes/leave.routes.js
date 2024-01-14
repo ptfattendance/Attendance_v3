@@ -22,5 +22,6 @@ router.post('/getByUser',controller.listUserLeaveRequests);
 // API to approve or decline the leave request
 router.post('/changeStatus', controller.changeLeaveStatus);
 
+router.post('/noti',controller.sendNoti);
 
 module.exports = router;

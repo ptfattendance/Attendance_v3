@@ -178,6 +178,18 @@ exports.requestLeave = async (req, res) => {
       }
     });
 
+const adminEmail = "deepakck02@gmail.com";
+    const notification = await Notification.findOne({ 'email': adminEmail });
+
+    console.log(notification);
+    console.log(notification.email);
+    console.log(notification.token);
+
+    const deviceToken = notification.token; // Replace with the actual device token
+    const notificationTitle = 'Request';
+    const notificationBody = `You have a new leave request from ${name}`;
+
+    sendPushNotification(deviceToken, notificationTitle, notificationBody,"admin");
 
 
 
@@ -591,22 +603,17 @@ exports.changeLeaveStatus = async (req, res) => {
       });
 
 
-
-
-
-
-
-
-
-
       //get token for user from the db and send notification
-      const notification = await Notification.findOne({ email });
-
-      const deviceToken = notification.token; // Replace with the actual device token
+      const notification = await Notification.findOne({ 'email': email });
+      if(notification) {
+        const deviceToken = notification.token; // Replace with the actual device token
       const notificationTitle = 'Approved';
       const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been approved`;
 
-      sendPushNotification(deviceToken, notificationTitle, notificationBody);
+      sendPushNotification(deviceToken, notificationTitle, notificationBody,'user');
+      }
+
+      
 
 
     } else if (status == 'rejected') {
@@ -727,13 +734,16 @@ body {
 
 
 
-      const notification = await Notification.findOne({ email });
-
-      const deviceToken = notification.token; // Replace with the actual device token
+      const notification = await Notification.findOne({ 'email': email });
+      if(notification){
+          const deviceToken = notification.token; // Replace with the actual device token
       const notificationTitle = 'Rejected';
       const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been rejectes`;
 
-      sendPushNotification(deviceToken, notificationTitle, notificationBody);
+      sendPushNotification(deviceToken, notificationTitle, notificationBody,"user");
+      }
+
+    
 
     }
 
@@ -743,6 +753,32 @@ body {
     res.status(500).json({ message: 'Failed to change leave request status' });
   }
 };
+
+
+exports.sendNoti = async (req,res) => {
+  try{
+    const { email } = req.body;
+
+    const notification = await Notification.findOne({ 'email': email });
+    if(notification){
+      const deviceToken = notification.token;
+    const notificationTitle = 'Approved';
+    const notificationBody = `Your leave request has been approved`;
+
+    sendPushNotification(deviceToken, notificationTitle, notificationBody,'user');
+
+    res.status(200).json({ message: 'Notification Send' });
+    } else {
+      res.status(400).json({ message: 'Not found' });
+    }
+
+    
+
+  }catch(e){
+ res.status(500).json({ message: e.toString });
+  }
+}
+
 
 
 // Function to generate unique leave ID
@@ -763,8 +799,11 @@ async function generateLeaveId() {
 
 
 // Function to send a push notification
-async function sendPushNotification(deviceToken, title, body) {
+async function sendPushNotification(deviceToken, title, body,data) {
   const message = {
+    data: {
+      "click": data,
+    },
     notification: {
       title: title,
       body: body,
