@@ -10,7 +10,7 @@ router.route("/signup").post(controller.register);
 router.route("/login").post(controller.login);
 
 // API to get all users
-router.route("/get-all").get(controller.getAllUsers);
+router.route("/get-all/:batchFilter").get(controller.getAllUsers);
 
 // API to delete a user
 router.route("/delete").post(controller.deleteUsers);

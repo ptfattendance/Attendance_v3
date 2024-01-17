@@ -370,8 +370,20 @@ exports.getAllUsers = async (req, res) => {
   try {
       console.log('called get all users');
 
+      const { batchFilter } = req.params;
+      let filter = {};
+
+      if(batchFilter && batchFilter != "All"){
+
+        filter = { batch: batchFilter };
+
+      }
+
+      // { batch: "Batch 1" }
       // Find all users excluding the password
-      const users = await User.find({}, { password: 0 });
+      
+
+      const users = await User.find(filter, { password: 0 });
 
       if (!users || users.length === 0) {
           return res.status(404).json({ message: 'No users found' });
