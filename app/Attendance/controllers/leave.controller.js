@@ -177,8 +177,8 @@ exports.requestLeave = async (req, res) => {
         try {
 
           const notification = await Notification.findOne({ 'email': admins[i] });
-
-          console.log(notification);
+          if(notification){
+            console.log(notification);
           console.log(notification.email);
           console.log(notification.token);
 
@@ -187,6 +187,9 @@ exports.requestLeave = async (req, res) => {
           const notificationBody = `You have a new leave request from ${name}`;
 
           sendPushNotification(deviceToken, notificationTitle, notificationBody, "admin");
+          }
+
+          
 
           // await the sendMail function to ensure it completes before moving to the next iteration
           // await transporter.sendMail(mailOptions);
