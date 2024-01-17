@@ -30,7 +30,7 @@ exports.requestLeave = async (req, res) => {
     const leaveId = await generateLeaveId();
 
     // Check if the leave request already exists for the specified date
-    const existingLeaveRequest = await Leave.findOne({ email, requestDate,reason });
+    const existingLeaveRequest = await Leave.findOne({ email, requestDate, reason });
 
     if (existingLeaveRequest) {
       return res.status(400).json({ message: 'Leave request already exists for the specified date and reason' });
@@ -61,8 +61,6 @@ exports.requestLeave = async (req, res) => {
     await newLeaveRequest.save();
 
 
-
-    // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
@@ -73,12 +71,24 @@ exports.requestLeave = async (req, res) => {
       },
     });
 
-    // setup email data with HTML body
-    const mailOptions = {
-      from: 'ptfattendanceapp@gmail.com',
-      to: 'deepakck02@gmail.com',
-      subject: 'Leave Request',
-      html: `
+
+    let admins = [];
+    const admin = await User.find({ role: "admin" });
+
+    if (admin) {
+      for (let adm of admin) {
+        admins.push(adm.email);
+      }
+      console.log(admins);
+
+      for (let i = 0; i < admins.length; i++) {
+        // setup email data with HTML body
+
+        const mailOptions = {
+          from: 'ptfattendanceapp@gmail.com',
+          to: `${admins[i]}`,
+          subject: 'Leave Request',
+          html: `
       <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,7 +148,7 @@ exports.requestLeave = async (req, res) => {
     </div>
     <div class="title">Leave Request - PTF Attendance App</div>
     <div class="content">Dear Team,</div>
-    <div class="content">I, <b>${name}</b>, want to request leave for the following details:</div>
+    <div class="content"> <b>${name}</b>, want to request leave for the following details:</div>
     <div class="content">
       <strong>Reason for Leave:</strong> ${reason}
     </div>
@@ -162,34 +172,180 @@ exports.requestLeave = async (req, res) => {
 
 </html>
     `,
-    };
+        };
+
+        try {
+
+          const notification = await Notification.findOne({ 'email': admins[i] });
+
+          console.log(notification);
+          console.log(notification.email);
+          console.log(notification.token);
+
+          const deviceToken = notification.token; // Replace with the actual device token
+          const notificationTitle = 'Request';
+          const notificationBody = `You have a new leave request from ${name}`;
+
+          sendPushNotification(deviceToken, notificationTitle, notificationBody, "admin");
+
+          // await the sendMail function to ensure it completes before moving to the next iteration
+          // await transporter.sendMail(mailOptions);
+          // send mail with defined transport object
+          transporter.sendMail(mailOptions, async (error, info) => {
+            if (error) {
+              console.log(error);
+              console.log(info);
+              // return res.status(500).json({ error: 'Error sending email' });
+            } else {
+              // console.log('OTP saved');
+              console.log(info);
+
+              // return res.status(200).json({ message: 'Email sent successfully' });
+            }
+          });
+          console.log(`Email sent to ${admins[i]}`);
+        } catch (error) {
+          console.error(`Error sending email to ${admins[i]}:`, error);
+          // handle the error appropriately, for example, logging or responding to the client
+        }
+      }
+    }
+
+
+
+
+    // create reusable transporter object using the default SMTP transport
+    // const transporter = nodemailer.createTransport({
+    //   host: 'smtp.gmail.com',
+    //   port: 465,
+    //   secure: true,
+    //   auth: {
+    //     user: 'ptfattendanceapp@gmail.com',
+    //     pass: 'vkxhfuwbaygppaim',
+    //   },
+    // });
+
+
+    // setup email data with HTML body
+    //     const mailOptions = {
+    //       from: 'ptfattendanceapp@gmail.com',
+    //       to: 'deepakck02@gmail.com',
+    //       subject: 'Leave Request',
+    //       html: `
+    //       <!DOCTYPE html>
+    // <html lang="en">
+    // <head>
+    //   <title>Leave Request</title>
+    //   <style>
+    //     body {
+    //       background-color: #f5f5f5;
+    //       font-family: Arial, sans-serif;
+    //     }
+
+    //     .container {
+    //       max-width: 500px;
+    //       margin: 0 auto;
+    //       padding: 20px;
+    //       background-color: #ffffff;
+    //       border-radius: 5px;
+    //       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    //     }
+
+    //     .logo {
+    //       text-align: center;
+    //       margin-bottom: 20px;
+    //     }
+
+    //     .logo img {
+    //       max-width: 150px;
+    //     }
+
+    //     .title {
+    //       text-align: center;
+    //       font-size: 24px;
+    //       font-weight: bold;
+    //       margin-bottom: 20px;
+    //     }
+
+    //     .content {
+    //       font-size: 16px;
+    //       margin-bottom: 20px;
+    //     }
+
+    //     .footer {
+    //       text-align: center;
+    //       font-size: 14px;
+    //       color: #808080;
+    //       margin-top: 20px;
+    //     }
+
+    //     .footer-text {
+    //       font-size: 12px;
+    //     }
+    //   </style>
+    // </head>
+    // <body>
+    //   <div class="container">
+    //     <div class="logo">
+    //       <img src="https://i.postimg.cc/s2PRL37q/attendance-logo.png" alt="PTF Logo">   
+    //     </div>
+    //     <div class="title">Leave Request - PTF Attendance App</div>
+    //     <div class="content">Dear Team,</div>
+    //     <div class="content">I, <b>${name}</b>, want to request leave for the following details:</div>
+    //     <div class="content">
+    //       <strong>Reason for Leave:</strong> ${reason}
+    //     </div>
+    //     <div class="content">
+    //       <strong>Leave Type:</strong> ${type}
+    //     </div>
+    //     <div class="content">
+    //       <strong>Date Requested:</strong> ${requestDate}
+    //     </div>
+    //     <div class="content">
+    //     <strong>Leave Until:</strong> ${toDate}
+    //     </div>
+
+    //     <div class="footer">
+    //       Your prompt attention to this matter is greatly appreciated.
+    //       <div class="footer-text">© PTF - 2022 Team</div>
+    //     </div>
+    //   </div>
+    // </body>
+
+
+    // </html>
+    //     `,
+    //     };
 
     // send mail with defined transport object
-    transporter.sendMail(mailOptions, async (error, info) => {
-      if (error) {
-        console.log(error);
-        console.log(info);
-        // return res.status(500).json({ error: 'Error sending email' });
-      } else {
-        // console.log('OTP saved');
-        console.log(info);
+    // transporter.sendMail(mailOptions, async (error, info) => {
+    //   if (error) {
+    //     console.log(error);
+    //     console.log(info);
+    //     // return res.status(500).json({ error: 'Error sending email' });
+    //   } else {
+    //     // console.log('OTP saved');
+    //     console.log(info);
 
-        // return res.status(200).json({ message: 'Email sent successfully' });
-      }
-    });
+    //     // return res.status(200).json({ message: 'Email sent successfully' });
+    //   }
+    // });
 
-const adminEmail = "deepakck02@gmail.com";
-    const notification = await Notification.findOne({ 'email': adminEmail });
 
-    console.log(notification);
-    console.log(notification.email);
-    console.log(notification.token);
 
-    const deviceToken = notification.token; // Replace with the actual device token
-    const notificationTitle = 'Request';
-    const notificationBody = `You have a new leave request from ${name}`;
 
-    sendPushNotification(deviceToken, notificationTitle, notificationBody,"admin");
+    // const adminEmail = "deepakck02@gmail.com";
+    // const notification = await Notification.findOne({ 'email': adminEmail });
+
+    // console.log(notification);
+    // console.log(notification.email);
+    // console.log(notification.token);
+
+    // const deviceToken = notification.token; // Replace with the actual device token
+    // const notificationTitle = 'Request';
+    // const notificationBody = `You have a new leave request from ${name}`;
+
+    // sendPushNotification(deviceToken, notificationTitle, notificationBody,"admin");
 
 
 
@@ -605,15 +761,15 @@ exports.changeLeaveStatus = async (req, res) => {
 
       //get token for user from the db and send notification
       const notification = await Notification.findOne({ 'email': email });
-      if(notification) {
+      if (notification) {
         const deviceToken = notification.token; // Replace with the actual device token
-      const notificationTitle = 'Approved';
-      const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been approved`;
+        const notificationTitle = 'Approved';
+        const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been approved`;
 
-      sendPushNotification(deviceToken, notificationTitle, notificationBody,'user');
+        sendPushNotification(deviceToken, notificationTitle, notificationBody, 'user');
       }
 
-      
+
 
 
     } else if (status == 'rejected') {
@@ -735,15 +891,15 @@ body {
 
 
       const notification = await Notification.findOne({ 'email': email });
-      if(notification){
-          const deviceToken = notification.token; // Replace with the actual device token
-      const notificationTitle = 'Rejected';
-      const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been rejectes`;
+      if (notification) {
+        const deviceToken = notification.token; // Replace with the actual device token
+        const notificationTitle = 'Rejected';
+        const notificationBody = `Your leave request from ${leaveRequest.requestedOn} has been rejectes`;
 
-      sendPushNotification(deviceToken, notificationTitle, notificationBody,"user");
+        sendPushNotification(deviceToken, notificationTitle, notificationBody, "user");
       }
 
-    
+
 
     }
 
@@ -755,27 +911,27 @@ body {
 };
 
 
-exports.sendNoti = async (req,res) => {
-  try{
+exports.sendNoti = async (req, res) => {
+  try {
     const { email } = req.body;
 
     const notification = await Notification.findOne({ 'email': email });
-    if(notification){
+    if (notification) {
       const deviceToken = notification.token;
-    const notificationTitle = 'Approved';
-    const notificationBody = `Your leave request has been approved`;
+      const notificationTitle = 'Approved';
+      const notificationBody = `Your leave request has been approved`;
 
-    sendPushNotification(deviceToken, notificationTitle, notificationBody,'user');
+      sendPushNotification(deviceToken, notificationTitle, notificationBody, 'user');
 
-    res.status(200).json({ message: 'Notification Send' });
+      res.status(200).json({ message: 'Notification Send' });
     } else {
       res.status(400).json({ message: 'Not found' });
     }
 
-    
 
-  }catch(e){
- res.status(500).json({ message: e.toString });
+
+  } catch (e) {
+    res.status(500).json({ message: e.toString });
   }
 }
 
@@ -799,7 +955,7 @@ async function generateLeaveId() {
 
 
 // Function to send a push notification
-async function sendPushNotification(deviceToken, title, body,data) {
+async function sendPushNotification(deviceToken, title, body, data) {
   const message = {
     data: {
       "click": data,
