@@ -94,7 +94,9 @@ function startOtpCleanupScheduler() {
             // Delete the expired OTPs
             await Otp.deleteMany({ _id: { $in: expiredOtps.map(otp => otp._id) } });
 
-            console.log(`${expiredOtps.length} expired OTP(s) deleted.`);
+            if(expiredOtps.length != 0){
+                console.log(`${expiredOtps.length} expired OTP(s) deleted.`);
+            }
         } catch (error) {
             console.error('Error deleting expired OTPs:', error);
         }

@@ -868,5 +868,17 @@ async function sendPushNotification(deviceToken, title, body, data) {
 
   } catch (error) {
     console.error('Error sending message:', error);
+    // Handle invalid token error
+    if (error.code === 'messaging/invalid-registration-token') {
+      try{
+          console.log('Invalid token:', deviceToken);
+      // Remove the entire document from the database
+      await Notification.findOneAndDelete({ 'token': deviceToken });
+      console.log('Document removed from database for token:', deviceToken);
+      }catch(e){
+        console.error('Error removing invalid token:', e);
+      }
+    
+    }
   }
 }
