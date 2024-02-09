@@ -110,12 +110,12 @@ exports.verify = async (req, res) => {
                         // const formattedDate = new Date(late.on).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
                         // console.log(new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]);
 
-                        if (late === null) {
+                        if (late === null || !late) {
                             attendanceEntry.in.late = true;
-                            console.log('Marked as late');
+                            console.log('Marked as late :'+attendanceEntry.email);
                         } else{
                             if(late.status === "approved" && new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]){
-                                console.log("Late request found");
+                                console.log("Late request found for : "+late.email??'');
                            } else{
                                attendanceEntry.in.late = true;
                                console.log("Late marked");
@@ -175,12 +175,12 @@ exports.verify = async (req, res) => {
                         // console.log(late.on);
                         // console.log(new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]);
 
-                        if (late === null) {
+                        if (late === null || !late) {
                             attendanceEntry.in.late = true;
-                            console.log("Late marked");
+                            console.log('Marked as late :'+attendanceEntry.email);
                         } else {
-                            if (late.on && late.status === "approved" && new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]) {
-                                console.log("Late request found");
+                            if (late.status === "approved" && new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]) {
+                                console.log("Late request found for : "+late.email??'');
                             } else {
                                 attendanceEntry.in.late = true;
                                 console.log("Late marked");
