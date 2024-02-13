@@ -67,8 +67,10 @@ exports.verify = async (req, res) => {
                 //     return res.status(400).json({ message: 'You are already out' });
                 // } else 
                 if (lastScan === 'in' && attendanceEntry.lastScan === 'in') {
+                    console.log(email + ' already in');
                     return res.status(202).json({ message: 'You are already in' });
                 } else if (attendanceEntry.lastScan === 'out') {
+                    console.log(email + ' All marked for the day');
                     return res.status(202).json({ message: 'Attendance already marked for the day' });
                 } else {
                     // Update the lastScan field based on the current scan
@@ -105,7 +107,7 @@ exports.verify = async (req, res) => {
                         (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd)
                     ) {
                         const late = await Late.findOne({ email });
-                        console.log(currentDate);
+                        console.log('current date' + currentDate);
                         // console.log(late.on);
                         // const formattedDate = new Date(late.on).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
                         // console.log(new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]);
@@ -114,6 +116,9 @@ exports.verify = async (req, res) => {
                             attendanceEntry.in.late = true;
                             console.log('Marked as late :'+attendanceEntry.email);
                         } else{
+                            console.log(new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]);
+                            console.log('current date for late : ' + new Date(currentDate).toISOString().split('T')[0])
+                            console.log('Marked as late : '+ late.on.toISOString().split('T')[0]);
                             if(late.status === "approved" && new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]){
                                 console.log("Late request found for : "+late.email??'');
                            } else{
@@ -179,6 +184,11 @@ exports.verify = async (req, res) => {
                             attendanceEntry.in.late = true;
                             console.log('Marked as late :'+attendanceEntry.email);
                         } else {
+
+                            console.log(new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]);
+                            console.log('current date for late : ' + new Date(currentDate).toISOString().split('T')[0])
+                            console.log('Marked as late : '+ late.on.toISOString().split('T')[0]);
+
                             if (late.status === "approved" && new Date(currentDate).toISOString().split('T')[0] === late.on.toISOString().split('T')[0]) {
                                 console.log("Late request found for : "+late.email??'');
                             } else {
