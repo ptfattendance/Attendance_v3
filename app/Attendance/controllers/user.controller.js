@@ -4,7 +4,8 @@ const User = db.user;
 const Image = db.image;
 const Otp = db.otp;
 const bcrypt = require("bcrypt");
-
+const fs = require('fs');
+const path = require('path');
 
 
 
@@ -70,6 +71,44 @@ exports.getImageByEmail = async (req, res) => {
         }
 
         res.status(200).json({ image });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getImage = async (req, res) => {
+    try {
+        // console.log('called get network image by email');
+
+        const { email } = req.params;
+
+        const image = await Image.findOne({ email });
+
+        if (!image) {
+            // Path to the default image
+            const defaultImagePath = path.join(__dirname, 'noImage.png');
+
+            // Check if the default image exists
+            fs.access(defaultImagePath, fs.constants.F_OK, (err) => {
+                if (err) {
+                    // If the default image does not exist, send a 404 response
+                    return res.status(404).json({ message: 'Image not found' });
+                }
+
+                // Set the Content-Type header to image/jpeg or the appropriate format
+                res.setHeader('Content-Type', 'image/jpeg');
+
+                // Read the default image file and send it as the response
+                fs.createReadStream(defaultImagePath).pipe(res);
+            });
+        } else {
+             // Set the Content-Type header to image/jpeg or the appropriate format
+        res.setHeader('Content-Type', 'image/jpeg');
+
+        // Convert the base64 string back to a Buffer and send it as the response
+        const buffer = Buffer.from(image.data, 'base64');
+        res.send(buffer);
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

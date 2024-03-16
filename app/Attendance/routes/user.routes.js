@@ -14,6 +14,9 @@ router.route("/get/:email").get(controller.getUser);
 // API to get image
 router.route("/image-get").post(controller.getImageByEmail);
 
+// API to get image
+router.route("/image/:email").get(controller.getImage);
+
 // API to upload image
 router.route("/image-add").post(upload.single('image'), controller.uploadImage);
 

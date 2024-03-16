@@ -171,20 +171,22 @@ exports.listAttendancesByDate = async (req, res) => {
 
 
 // API to list attendance by month, year, and batch
+
 exports.listAttendancesByMonthAndBatch = async (req, res) => {
     try {
-        const { month, year, batch } = req.body;
+        const { month, year, batch, page = 1, limit = 15 } = req.body;
+        console.log("list attendance by month, year and batch");
 
-        // If no parameters are provided, retrieve all attendance entries with user details
+
+        //         // If no parameters are provided, retrieve all attendance entries with user details
         if (!month && !year && !batch) {
-            const allAttendances = await Attendance.find();
+            const skip = (page - 1) * limit;
+            const allAttendances = await Attendance.find().limit(limit).skip(skip).exec();
 
             const formattedAllAttendances = await Promise.all(
                 allAttendances.map(async (attendance) => {
                     const user = await User.findOne({ email: attendance.email });
-
-                    // Fetch user image from the image collection
-                    const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+                    // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
 
                     return {
                         in: {
@@ -203,7 +205,7 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
                         designation: user ? user.designation : '',
                         batch: user ? user.batch : '',
                         lastScan: attendance.lastScan,
-                        image: image ? image.data : '', // Include user image
+                        // image: image ? image.data : '',
                         createdAt: user ? new Date(user.createdAt).toISOString() : '',
                         updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
                         __v: attendance.__v,
@@ -211,8 +213,19 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
                 })
             );
 
-            return res.status(200).json({ attendances: formattedAllAttendances });
+           // Get total documents in the Attendance collection
+           const count = await Attendance.countDocuments();
+
+           // Return response with attendances, total pages, and current page
+           return res.status(200).json({
+               attendances: formattedAllAttendances,
+               totalPages: Math.ceil(count / limit),
+               currentPage: page,
+           });
         }
+
+
+
 
         // Construct the base query to filter by date
         const baseQuery = {
@@ -234,79 +247,28 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
 
         if (batch) {
             const usersInBatch = await User.find({ batch }, { email: 1 });
-
-            // Check if there are any users in the specified batch
             if (usersInBatch.length === 0) {
                 return res.status(400).json({ message: 'Invalid batch' });
             }
-
             userEmailsInBatch = usersInBatch.map(user => user.email);
-            // Define batchQuery for batch-only condition
-            batchQuery = { email: { $in: userEmailsInBatch } }
-
+            batchQuery = { email: { $in: userEmailsInBatch } };
         }
 
         // Update the query to include batch filtering
         if (batch && month && year) {
-            // Filter by date and batch
             baseQuery.email = { $in: userEmailsInBatch };
         } else if (batch) {
-            // Filter only by batch without date filtering
-            const attendancesBatchOnly = await Attendance.find(batchQuery);
-
-            const formattedAttendancesBatchOnly = await Promise.all(
-                attendancesBatchOnly.map(async (attendance) => {
-                    // Fetch user and image from the image collection
-                    const user = await User.findOne({ email: attendance.email });
-                    const image = await Image.findOne({ email: attendance.email }, { data: 1 });
-
-                    return {
-                        in: {
-                            ...attendance.in,
-                            date: new Date(attendance.in.date).toLocaleDateString('en-US'),
-                        },
-                        out: {
-                            date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
-                            time: attendance.out.time || '',
-                        },
-                        _id: attendance._id,
-                        email: attendance.email,
-                        name: user ? user.name : '',
-                        phone: user ? user.phoneNumber : '',
-                        address: user ? user.address : '',
-                        designation: user ? user.designation : '',
-                        batch: user ? user.batch : '',
-                        lastScan: attendance.lastScan,
-                        image: image ? image.data : '', // Include user image
-                        createdAt: user ? new Date(user.createdAt).toISOString() : '',
-                        updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
-                        __v: attendance.__v, // Include user image
-                    };
-                })
-            );
-
-            return res.status(200).json({ attendances: formattedAttendancesBatchOnly });
-
+            baseQuery = batchQuery;
         }
 
-        // Find all attendance entries based on the constructed query
-        const attendances = await Attendance.find(baseQuery);
+        // Apply pagination to the query
+        const skip = (page - 1) * limit;
+        const attendances = await Attendance.find(baseQuery).limit(limit).skip(skip).exec();
 
-        if (attendances.length === 0) {
-            return res.status(404).json({ message: 'No attendance entries found for the specified parameters' });
-        }
-
-        // Convert the date strings to Date objects for proper sorting
-        const sortedAttendances = attendances.sort((a, b) => new Date(b.in.date) - new Date(a.in.date));
-
-        // Create an array to store the formatted results
+        // Format the attendances
         const formattedAttendances = await Promise.all(
-            sortedAttendances.map(async (attendance) => {
+            attendances.map(async (attendance) => {
                 const user = await User.findOne({ email: attendance.email });
-
-                // Fetch user image from the image collection
-                const image = await Image.findOne({ email: attendance.email }, { data: 1 });
-
                 return {
                     in: {
                         ...attendance.in,
@@ -324,7 +286,6 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
                     designation: user ? user.designation : '',
                     batch: user ? user.batch : '',
                     lastScan: attendance.lastScan,
-                    image: image ? image.data : '', // Include user image
                     createdAt: user ? new Date(user.createdAt).toISOString() : '',
                     updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
                     __v: attendance.__v,
@@ -332,12 +293,323 @@ exports.listAttendancesByMonthAndBatch = async (req, res) => {
             })
         );
 
-        res.status(200).json({ attendances: formattedAttendances });
+        // Get total documents in the Attendance collection that match the query criteria
+        const count = await Attendance.countDocuments(baseQuery);
+
+        // Return response with attendances, total pages, and current page
+        return res.status(200).json({
+            attendances: formattedAttendances,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+        });
     } catch (error) {
         console.error('Error listing attendances by month and batch:', error);
         res.status(500).json({ message: 'Failed to list attendances by month and batch' });
     }
 };
+
+
+// exports.listAttendancesByMonthAndBatch = async (req, res) => {
+//     try {
+//         const { month, year, batch, page = 1, limit = 15 } = req.body;
+//         console.log("list attendance by monnth, year and batch")
+
+//         // If no parameters are provided, retrieve all attendance entries with user details
+//         if (!month && !year && !batch) {
+//             const skip = (page - 1) * limit;
+//             const allAttendances = await Attendance.find().limit(limit).skip(skip).exec();
+
+//             const formattedAllAttendances = await Promise.all(
+//                 allAttendances.map(async (attendance) => {
+//                     const user = await User.findOne({ email: attendance.email });
+//                     // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+
+//                     return {
+//                         in: {
+//                             ...attendance.in,
+//                             date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                         },
+//                         out: {
+//                             date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                             time: attendance.out.time || '',
+//                         },
+//                         _id: attendance._id,
+//                         email: attendance.email,
+//                         name: user ? user.name : '',
+//                         phone: user ? user.phoneNumber : '',
+//                         address: user ? user.address : '',
+//                         designation: user ? user.designation : '',
+//                         batch: user ? user.batch : '',
+//                         lastScan: attendance.lastScan,
+//                         // image: image ? image.data : '',
+//                         createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                         updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                         __v: attendance.__v,
+//                     };
+//                 })
+//             );
+
+//            // Get total documents in the Attendance collection
+//            const count = await Attendance.countDocuments();
+
+//            // Return response with attendances, total pages, and current page
+//            return res.status(200).json({
+//                attendances: formattedAllAttendances,
+//                totalPages: Math.ceil(count / limit),
+//                currentPage: page,
+//            });
+//         }
+
+//         // Construct the base query to filter by date
+//         const baseQuery = {
+//             'in.date': {},
+//         };
+
+//         // Update the query based on the parameters provided
+//         if (month && year) {
+//             baseQuery['in.date'].$gte = `${month}/01/${year}`;
+//     baseQuery['in.date'].$lte = `${month}/31/${year}`;
+//     const skip = (page - 1) * limit;
+//     const attendances = await Attendance.find(baseQuery).limit(limit).skip(skip).exec();
+//     const formattedAttendances = await Promise.all(
+//         attendances.map(async (attendance) => {
+//             const user = await User.findOne({ email: attendance.email });
+//             // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+
+//             return {
+//                 in: {
+//                     ...attendance.in,
+//                     date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                 },
+//                 out: {
+//                     date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                     time: attendance.out.time || '',
+//                 },
+//                 _id: attendance._id,
+//                 email: attendance.email,
+//                 name: user ? user.name : '',
+//                 phone: user ? user.phoneNumber : '',
+//                 address: user ? user.address : '',
+//                 designation: user ? user.designation : '',
+//                 batch: user ? user.batch : '',
+//                 lastScan: attendance.lastScan,
+//                 // image: image ? image.data : '',
+//                 createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                 updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                 __v: attendance.__v,
+//             };
+//         })
+//     );
+
+//     // Get total documents in the Attendance collection
+//     const count = await Attendance.countDocuments(baseQuery);
+
+//     // Return response with attendances, total pages, and current page
+//     return res.status(200).json({
+//         attendances: formattedAttendances,
+//         totalPages: Math.ceil(count / limit),
+//         currentPage: page,
+//     });
+
+    
+//         } else if (year) {
+//             baseQuery['in.date'].$gte = `01/01/${year}`;
+//             baseQuery['in.date'].$lte = `12/31/${year}`;
+//             const skip = (page - 1) * limit;
+//     const attendances = await Attendance.find(baseQuery).limit(limit).skip(skip).exec();
+//     const formattedAttendances = await Promise.all(
+//         attendances.map(async (attendance) => {
+//             const user = await User.findOne({ email: attendance.email });
+//             // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+
+//             return {
+//                 in: {
+//                     ...attendance.in,
+//                     date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                 },
+//                 out: {
+//                     date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                     time: attendance.out.time || '',
+//                 },
+//                 _id: attendance._id,
+//                 email: attendance.email,
+//                 name: user ? user.name : '',
+//                 phone: user ? user.phoneNumber : '',
+//                 address: user ? user.address : '',
+//                 designation: user ? user.designation : '',
+//                 batch: user ? user.batch : '',
+//                 lastScan: attendance.lastScan,
+//                 // image: image ? image.data : '',
+//                 createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                 updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                 __v: attendance.__v,
+//             };
+//         })
+//     );
+
+//     // Get total documents in the Attendance collection
+//     const count = await Attendance.countDocuments(baseQuery);
+
+//     // Return response with attendances, total pages, and current page
+//     return res.status(200).json({
+//         attendances: formattedAttendances,
+//         totalPages: Math.ceil(count / limit),
+//         currentPage: page,
+//     });
+
+//         }
+
+//         // If batch is provided, find the user emails in that batch
+//         let userEmailsInBatch = [];
+//         let batchQuery = {};
+
+//         if (batch) {
+//             const usersInBatch = await User.find({ batch }, { email: 1 });
+//             if (usersInBatch.length === 0) {
+//                 return res.status(400).json({ message: 'Invalid batch' });
+//             }
+//             userEmailsInBatch = usersInBatch.map(user => user.email);
+//             batchQuery = { email: { $in: userEmailsInBatch } };
+//             const skip = (page - 1) * limit;
+//             const attendancesBatchOnly = await Attendance.find(batchQuery).limit(limit).skip(skip).exec();
+//             const formattedAttendances = await Promise.all(
+//                 attendancesBatchOnly.map(async (attendance) => {
+//                     const user = await User.findOne({ email: attendance.email });
+//                     // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+        
+//                     return {
+//                         in: {
+//                             ...attendance.in,
+//                             date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                         },
+//                         out: {
+//                             date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                             time: attendance.out.time || '',
+//                         },
+//                         _id: attendance._id,
+//                         email: attendance.email,
+//                         name: user ? user.name : '',
+//                         phone: user ? user.phoneNumber : '',
+//                         address: user ? user.address : '',
+//                         designation: user ? user.designation : '',
+//                         batch: user ? user.batch : '',
+//                         lastScan: attendance.lastScan,
+//                         // image: image ? image.data : '',
+//                         createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                         updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                         __v: attendance.__v,
+//                     };
+//                 })
+//             );
+        
+//             // Get total documents in the Attendance collection
+//             const count = await Attendance.countDocuments(batchQuery);
+        
+//             // Return response with attendances, total pages, and current page
+//             return res.status(200).json({
+//                 attendances: formattedAttendances,
+//                 totalPages: Math.ceil(count / limit),
+//                 currentPage: page,
+//             });
+
+//         }
+
+//         // Update the query to include batch filtering
+//         if (batch && month && year) {
+//             // Filter by date and batch
+//             baseQuery.email = { $in: userEmailsInBatch };
+//             const skip = (page - 1) * limit;
+//             const attendances = await Attendance.find(baseQuery).limit(limit).skip(skip).exec();
+//             const formattedAttendances = await Promise.all(
+//                 attendances.map(async (attendance) => {
+//                     const user = await User.findOne({ email: attendance.email });
+//                     // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+        
+//                     return {
+//                         in: {
+//                             ...attendance.in,
+//                             date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                         },
+//                         out: {
+//                             date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                             time: attendance.out.time || '',
+//                         },
+//                         _id: attendance._id,
+//                         email: attendance.email,
+//                         name: user ? user.name : '',
+//                         phone: user ? user.phoneNumber : '',
+//                         address: user ? user.address : '',
+//                         designation: user ? user.designation : '',
+//                         batch: user ? user.batch : '',
+//                         lastScan: attendance.lastScan,
+//                         // image: image ? image.data : '',
+//                         createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                         updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                         __v: attendance.__v,
+//                     };
+//                 })
+//             );
+        
+//             // Get total documents in the Attendance collection
+//             const count = await Attendance.countDocuments(baseQuery);
+        
+//             // Return response with attendances, total pages, and current page
+//             return res.status(200).json({
+//                 attendances: formattedAttendances,
+//                 totalPages: Math.ceil(count / limit),
+//                 currentPage: page,
+//             });
+//         }
+
+//         // Find all attendance entries based on the constructed query
+//         const attendances = await Attendance.find(baseQuery);
+
+//         if (attendances.length === 0) {
+//             return res.status(404).json({ message: 'No attendance entries found for the specified parameters' });
+//         }
+
+//         // Convert the date strings to Date objects for proper sorting
+//         const sortedAttendances = attendances.sort((a, b) => new Date(b.in.date) - new Date(a.in.date));
+
+//         // Create an array to store the formatted results
+//         const formattedAttendances = await Promise.all(
+//             sortedAttendances.map(async (attendance) => {
+//                 const user = await User.findOne({ email: attendance.email });
+
+//                 // Fetch user image from the image collection
+//                 const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+
+//                 return {
+//                     in: {
+//                         ...attendance.in,
+//                         date: new Date(attendance.in.date).toLocaleDateString('en-US'),
+//                     },
+//                     out: {
+//                         date: attendance.out.date ? new Date(attendance.out.date).toLocaleDateString('en-US') : '',
+//                         time: attendance.out.time || '',
+//                     },
+//                     _id: attendance._id,
+//                     email: attendance.email,
+//                     name: user ? user.name : '',
+//                     phone: user ? user.phoneNumber : '',
+//                     address: user ? user.address : '',
+//                     designation: user ? user.designation : '',
+//                     batch: user ? user.batch : '',
+//                     lastScan: attendance.lastScan,
+//                     image: image ? image.data : '', // Include user image
+//                     createdAt: user ? new Date(user.createdAt).toISOString() : '',
+//                     updatedAt: user ? new Date(user.updatedAt).toISOString() : '',
+//                     __v: attendance.__v,
+//                 };
+//             })
+//         );
+
+//         res.status(200).json({ attendances: formattedAttendances });
+//     } catch (error) {
+//         console.error('Error listing attendances by month and batch:', error);
+//         res.status(500).json({ message: 'Failed to list attendances by month and batch' });
+//     }
+// };
 
 
 
