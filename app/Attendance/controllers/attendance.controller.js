@@ -79,7 +79,7 @@ exports.listAttendancesByDate = async (req, res) => {
         const populatedAttendances = await Promise.all(
             attendances.map(async (attendance) => {
                 const user = await User.findOne({ email: attendance.email }, { name: 1 });
-                const image = await Image.findOne({ email: attendance.email }, { data: 1 });
+                // const image = await Image.findOne({ email: attendance.email }, { data: 1 });
 
                 return {
                     attendance: {
@@ -94,7 +94,7 @@ exports.listAttendancesByDate = async (req, res) => {
                         },
                     },
                     name: user ? user.name : '',
-                    image: image ? image.data : '',
+                    // image: image ? image.data : '',
                 };
             })
         );
